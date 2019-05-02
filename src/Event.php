@@ -1,46 +1,66 @@
 <?php
 
-namespace Sid\Phalcon\AuthMiddleware;
+namespace AntonAm\Phalcon\Middleware;
 
-use Phalcon\Mvc\DispatcherInterface;
+use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\User\Plugin;
+use Phalcon\Events\Event as PhalconEvent;
+use Exception;
 
+/**
+ * Class Event
+ *
+ * @package AntonAm\Phalcon\Middleware
+ */
 class Event extends Plugin
 {
     /**
+     * @var string Middleware annotation name
+     */
+    private $annotationName;
+
+    public function __construct($annotationName = 'Middleware')
+    {
+        $this->annotationName = $annotationName;
+    }
+
+    /**
+     * @param PhalconEvent $event
+     * @param Dispatcher $dispatcher
+     * @param $data
+     * @return bool
      * @throws Exception
      */
-    public function beforeExecuteRoute(\Phalcon\Events\Event $event, DispatcherInterface $dispatcher, $data) : bool
+    public function beforeExecuteRoute(PhalconEvent $event, Dispatcher $dispatcher, $data): bool
     {
         $methodAnnotations = $this->annotations->getMethod(
             $dispatcher->getHandlerClass(),
             $dispatcher->getActiveMethod()
         );
 
-        if (!$methodAnnotations->has("AuthMiddleware")) {
+        if (!$methodAnnotations->has($this->annotationName)) {
             return true;
         }
 
-        foreach ($methodAnnotations->getAll("AuthMiddleware") as $annotation) {
-            $class = $annotation->getArgument(0);
+        foreach ($methodAnnotations->getAll($this->annotationName) as $annotation) {
+            $arguments = $annotation->getArguments();
+            $class = array_shift($arguments);
 
-            $authMiddleware = new $class();
+            $middleware = new $class();
 
-            if (!($authMiddleware instanceof MiddlewareInterface)) {
-                throw new Exception(
-                    "Not an auth middleware."
+            if (!($middleware instanceof MiddlewareInterface)) {
+                throw new MiddlewareException(
+                    'Middleware interface is not implemented'
                 );
             }
 
-
-
-            $result = $authMiddleware->authenticate();
-
-            if ($result !== false) {
-                return $result;
+            if ($middleware->handle($arguments) === false) {
+                throw new MiddlewareException(
+                    sprintf('Middleware %s return false result', $class)
+                );
             }
         }
 
-        return false;
+        return true;
     }
 }

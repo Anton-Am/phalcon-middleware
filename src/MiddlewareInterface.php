@@ -1,8 +1,18 @@
 <?php
 
-namespace Sid\Phalcon\AuthMiddleware;
+namespace AntonAm\Phalcon\Middleware;
 
+/**
+ * Interface MiddlewareInterface
+ *
+ * @package AntonAm\Phalcon\Middleware
+ */
 interface MiddlewareInterface
 {
-    public function authenticate() : bool;
+
+    /**
+     * @param array $params
+     * @return bool
+     */
+    public function handle(array $params = []): bool;
 }
