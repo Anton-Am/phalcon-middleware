@@ -4,101 +4,222 @@ namespace Tests;
 
 use Phalcon\Di;
 use Phalcon\Mvc\Dispatcher;
+use Phalcon\Di\FactoryDefault;
+use Phalcon\Events\Manager;
+use AntonAm\Phalcon\Middleware\Event;
+use AntonAm\Phalcon\Middleware\MiddlewareException;
+use Exception;
 
+/**
+ * Class MiddlewareCest
+ *
+ * @package Tests
+ */
 class MiddlewareCest
 {
-    public function _before()
+    /** @var Dispatcher */
+    private $dispatcher;
+
+    /**
+     * @inheritDoc
+     */
+    public function _before(): void
     {
         Di::reset();
 
-        $di = new \Phalcon\Di\FactoryDefault();
-
+        $di = new FactoryDefault();
         $di->set(
-            "dispatcher",
-            function () {
-                $dispatcher = new Dispatcher();
-
-                $eventsManager = new \Phalcon\Events\Manager();
-
+            'dispatcher',
+            function() {
+                $eventsManager = new Manager();
                 $eventsManager->attach(
-                    "dispatch",
-                    new \Sid\Phalcon\AuthMiddleware\Event()
+                    'dispatch',
+                    new Event()
                 );
 
+                $dispatcher = new Dispatcher();
                 $dispatcher->setEventsManager($eventsManager);
-
                 $dispatcher->setDefaultNamespace("Tests\\");
-
                 return $dispatcher;
             },
             true
         );
 
-        $this->dispatcher = $di->get("dispatcher");
+        $this->dispatcher = $di->get('dispatcher');
     }
 
 
-
-    public function middlewareIsAbleToInterfereWhenReturningTrue(UnitTester $I)
+    /**
+     * @param UnitTester $I
+     * @throws Exception
+     */
+    public function middlewareReturnTrue(UnitTester $I): void
     {
+        /** @var Dispatcher $dispatcher */
         $dispatcher = $this->dispatcher;
 
-        $dispatcher->setControllerName("index");
-        $dispatcher->setActionName("index");
+        $dispatcher->setControllerName('test');
+        $dispatcher->setActionName('success');
 
         $dispatcher->dispatch();
 
         $I->assertEquals(
-            "Goodbye cruel world",
+            TestController::STANDARD_MESSAGE,
             $dispatcher->getReturnedValue()
         );
     }
 
 
-    public function middlewareDoesNotInterfereWhenReturningFalse(UnitTester $I)
+    /**
+     * @param UnitTester $I
+     * @throws Exception
+     */
+    public function middlewareReturnFalse(UnitTester $I): void
     {
+        /** @var Dispatcher $dispatcher */
         $dispatcher = $this->dispatcher;
 
-        $dispatcher->setControllerName("index");
-        $dispatcher->setActionName("index2");
+        $dispatcher->setControllerName('test');
+        $dispatcher->setActionName('denied');
 
-        $dispatcher->dispatch();
-
-        $I->assertEquals(
-            "Hello world",
-            $dispatcher->getReturnedValue()
-        );
-    }
-
-    public function dispatcherWorksAsNormalWithoutAnyMiddleware(UnitTester $I)
-    {
-        $dispatcher = $this->dispatcher;
-
-        $dispatcher->setControllerName("index");
-        $dispatcher->setActionName("noMiddleware");
-
-        $dispatcher->dispatch();
-
-        $I->assertEquals(
-            "Hello world",
-            $dispatcher->getReturnedValue()
-        );
-    }
-
-    public function anExceptionIsThrownIfWePassSomethingThatIsntProperMiddleware(UnitTester $I)
-    {
-        $dispatcher = $this->dispatcher;
-
-        $dispatcher->setControllerName("index");
-        $dispatcher->setActionName("notProperMiddleware");
-
-
-
-        $I->expectException(
-            \Sid\Phalcon\AuthMiddleware\Exception::class,
-            function () use ($dispatcher) {
+        $I->expectThrowable(
+            MiddlewareException::class,
+            function() use ($dispatcher) {
                 $dispatcher->dispatch();
             }
+        );
+    }
+
+    /**
+     * @param UnitTester $I
+     * @throws Exception
+     */
+    public function multipleMiddlewareReturnTrue(UnitTester $I): void
+    {
+        /** @var Dispatcher $dispatcher */
+        $dispatcher = $this->dispatcher;
+
+        $dispatcher->setControllerName('test');
+        $dispatcher->setActionName('multipleSuccess');
+
+        $dispatcher->dispatch();
+
+        $I->assertEquals(
+            TestController::STANDARD_MESSAGE,
+            $dispatcher->getReturnedValue()
+        );
+    }
+
+    /**
+     * @param UnitTester $I
+     * @throws Exception
+     */
+    public function multipleMiddlewareReturnFalse(UnitTester $I): void
+    {
+        /** @var Dispatcher $dispatcher */
+        $dispatcher = $this->dispatcher;
+
+        $dispatcher->setControllerName('test');
+        $dispatcher->setActionName('multipleDenied');
+
+        $I->expectThrowable(
+            MiddlewareException::class,
+            function() use ($dispatcher) {
+                $dispatcher->dispatch();
+            }
+        );
+    }
+
+    /**
+     * @param UnitTester $I
+     * @throws Exception
+     */
+    public function workWithoutMiddleware(UnitTester $I): void
+    {
+        /** @var Dispatcher $dispatcher */
+        $dispatcher = $this->dispatcher;
+
+        $dispatcher->setControllerName('test');
+        $dispatcher->setActionName('noMiddleware');
+
+        $dispatcher->dispatch();
+
+        $I->assertEquals(
+            TestController::STANDARD_MESSAGE,
+            $dispatcher->getReturnedValue()
+        );
+    }
+
+
+    /**
+     * @param UnitTester $I
+     */
+    public function middlewareClassIsNotExist(UnitTester $I): void
+    {
+        /** @var Dispatcher $dispatcher */
+        $dispatcher = $this->dispatcher;
+
+        $dispatcher->setControllerName('test');
+        $dispatcher->setActionName('classIsNotExist');
+
+        $I->expectThrowable(
+            MiddlewareException::class,
+            function() use ($dispatcher) {
+                $dispatcher->dispatch();
+            }
+        );
+    }
+
+    /**
+     * @param UnitTester $I
+     */
+    public function middlewareClassIsNotMiddleware(UnitTester $I): void
+    {
+        /** @var Dispatcher $dispatcher */
+        $dispatcher = $this->dispatcher;
+
+        $dispatcher->setControllerName('test');
+        $dispatcher->setActionName('isNotMiddleware');
+
+        $I->expectThrowable(
+            MiddlewareException::class,
+            function() use ($dispatcher) {
+                $dispatcher->dispatch();
+            }
+        );
+    }
+
+    /**
+     * @param UnitTester $I
+     */
+    public function changeDefaultMiddlewareName(UnitTester $I): void
+    {
+        Di::reset();
+        $di = new FactoryDefault();
+        $di->set(
+            'dispatcher',
+            function() {
+                $eventsManager = new Manager();
+                $eventsManager->attach(
+                    'dispatch',
+                    new Event('AuthMiddleware')
+                );
+
+                $dispatcher = new Dispatcher();
+                $dispatcher->setEventsManager($eventsManager);
+                $dispatcher->setDefaultNamespace("Tests\\");
+                return $dispatcher;
+            },
+            true
+        );
+
+        $dispatcher = $di->get('dispatcher');
+        $dispatcher->setControllerName('test');
+        $dispatcher->setActionName('authMiddleware');
+        $dispatcher->dispatch();
+        $I->assertEquals(
+            TestController::STANDARD_MESSAGE,
+            $dispatcher->getReturnedValue()
         );
     }
 }

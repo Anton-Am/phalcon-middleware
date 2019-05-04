@@ -46,6 +46,12 @@ class Event extends Plugin
             $arguments = $annotation->getArguments();
             $class = array_shift($arguments);
 
+            if (!class_exists($class)) {
+                throw new MiddlewareException(
+                    'Middleware class is not exist'
+                );
+            }
+
             $middleware = new $class();
 
             if (!($middleware instanceof MiddlewareInterface)) {

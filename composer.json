@@ -5,14 +5,15 @@
   "license": "MIT",
   "authors": [
     {
-      "name": "Sid Roberts",
-      "email": "Sid@SidRoberts.co.uk",
-      "homepage": "http://www.SidRoberts.co.uk",
+      "name": "Anton Am",
+      "email": "antonamru@gmail.com",
+      "homepage": "https://github.com/Anton-Am",
       "role": "Developer"
     },
     {
-      "name": "Anton Am",
-      "email": "antonamru@gmail.com",
+      "name": "Sid Roberts",
+      "email": "Sid@SidRoberts.co.uk",
+      "homepage": "http://www.SidRoberts.co.uk",
       "role": "Developer"
     }
   ],
