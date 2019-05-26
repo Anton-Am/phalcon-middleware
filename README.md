@@ -1,30 +1,102 @@
-Sid\Phalcon\AuthMiddleware
+AntonAm\Phalcon\Middleware
 ==========================
 
-Auth Middleware component for Phalcon.
+Middleware component for Phalcon MVC controllers
 
 
+[![Latest Stable Version](https://poser.pugx.org/anton-am/phalcon-middleware/v/stable)](https://packagist.org/packages/anton-am/phalcon-middleware)
+[![Total Downloads](https://poser.pugx.org/anton-am/phalcon-middleware/downloads)](https://packagist.org/packages/anton-am/phalcon-middleware)
+[![Build Status](https://travis-ci.org/Anton-Am/phalcon-middleware.svg?branch=2.0.x)](https://travis-ci.org/Anton-Am/phalcon-middleware)
 
-[![Build Status](https://img.shields.io/travis/SidRoberts/phalcon-authmiddleware/2.0.x.svg?style=for-the-badge)](https://travis-ci.org/SidRoberts/phalcon-authmiddleware)
-[![GitHub release](https://img.shields.io/github/release/SidRoberts/phalcon-authmiddleware.svg?style=for-the-badge)]()
-
-[![License](https://img.shields.io/github/license/SidRoberts/phalcon-authmiddleware.svg?style=for-the-badge)]()
-
-[![GitHub issues](https://img.shields.io/github/issues-raw/SidRoberts/phalcon-authmiddleware.svg?style=for-the-badge)](https://github.com/SidRoberts/phalcon-authmiddleware/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/SidRoberts/phalcon-authmiddleware.svg?style=for-the-badge)](https://github.com/SidRoberts/phalcon-authmiddleware/pulls)
-
-
-
-## Installing
+## Installing ##
 
 Install using Composer:
 
 ```bash
 composer require sidroberts/phalcon-authmiddleware
 ```
+or add to your composer.json
+```bash
+"anton-am/phalcon-middleware": "^3.0.0"
+```
+
+You'll need to add the event to the `dispatcher` DI service:
+
+```php
+use AntonAm\Phalcon\Middleware\Event;
+use Phalcon\Events\Manager;
+use Phalcon\Mvc\Dispatcher;
+
+// ...
+
+$di->set(
+    "dispatcher",
+    function () use ($di) {
+            $eventsManager = new Manager();
+            
+            //Attach a listener
+            $eventsManager->attach(
+                'dispatch:beforeExecuteRoute',
+                new Event()
+            );
+
+            $dispatcher = new Dispatcher();
+            $dispatcher->setEventsManager($eventsManager);
+            return $dispatcher;
+    },
+    true
+);
+```
+
+Now, you can create middleware classes:
+
+```php
+namespace Modules\Frontend\Middlewares;
+
+use Phalcon\Mvc\User\Plugin;
+use AntonAm\Phalcon\Middleware\MiddlewareInterface;
+
+/**
+ * Class CSRF
+ *
+ * @package Modules\Frontend\Middlewares
+ */
+class CSRF extends Plugin implements MiddlewareInterface
+{
+    /**
+     * @param array $params
+     * @return bool
+     */
+    public function handle(array $params = []): bool
+    {
+        if (!$this->security->checkToken()) {
+            $this->flashSession->error('Wrong CSRF');
+            $this->response->redirect($this->request->getHTTPReferer(), true)->send();
+            return false;
+        }
+
+        return true;
+    }
+```
 
 
 
-## Documentation
+## Example ##
 
-See the [Wiki](https://github.com/SidRoberts/phalcon-authmiddleware/wiki).
+### Controller ###
+
+```php
+class IndexController extends \Phalcon\Mvc\Controller
+{
+    /**
+     * @Middleware("Modules\Frontend\Middlewares\MustBeLoggedIn")
+     * @Middleware("Modules\Frontend\Middlewares\HasProject")
+     * @Middleware("Modules\Frontend\Middlewares\MustBeInProjectAs", "Creator")
+     * @Middleware("Modules\Frontend\Middlewares\CSRF")
+     */
+    public function indexAction()
+    {
+        // ...
+    }
+}
+```
