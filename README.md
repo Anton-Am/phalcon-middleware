@@ -13,7 +13,7 @@ Middleware component for Phalcon MVC controllers
 Install using Composer:
 
 ```bash
-composer require sidroberts/phalcon-authmiddleware
+composer require anton-am/phalcon-middleware
 ```
 or add to your composer.json
 ```bash
