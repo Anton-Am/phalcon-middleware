@@ -6,7 +6,7 @@ Middleware component for Phalcon MVC controllers
 
 [![Latest Stable Version](https://poser.pugx.org/anton-am/phalcon-middleware/v/stable)](https://packagist.org/packages/anton-am/phalcon-middleware)
 [![Total Downloads](https://poser.pugx.org/anton-am/phalcon-middleware/downloads)](https://packagist.org/packages/anton-am/phalcon-middleware)
-[![Build Status](https://travis-ci.org/Anton-Am/phalcon-middleware.svg?branch=2.0.x)](https://travis-ci.org/Anton-Am/phalcon-middleware)
+[![Build Status](https://travis-ci.org/Anton-Am/phalcon-middleware.svg?branch=3.0.x)](https://travis-ci.org/Anton-Am/phalcon-middleware)
 
 ## Installing ##
 
