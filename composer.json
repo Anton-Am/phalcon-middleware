@@ -23,8 +23,8 @@
     "wiki": "https://github.com/Anton-Am/phalcon-middleware/wiki"
   },
   "require": {
-    "php": "~7.1",
-    "ext-phalcon": "~3.0"
+    "php": "~7.2",
+    "ext-phalcon": "3.4.3"
   },
   "require-dev": {
     "codeception/codeception": "~2.5",
