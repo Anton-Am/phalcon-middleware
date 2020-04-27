@@ -24,7 +24,7 @@
   },
   "require": {
     "php": "~7.2",
-    "ext-phalcon": "^3.4"
+    "ext-phalcon": ">=3.4"
   },
   "require-dev": {
     "codeception/codeception": "~2.5",
